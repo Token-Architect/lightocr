@@ -1,0 +1,16 @@
+fastapi>=0.100.0
+uvicorn>=0.23.0
+python-multipart
+aiofiles
+openai
+pypdfium2
+pymupdf
+python-docx
+openpyxl
+xlrd
+python-dotenv
+opencv-python-headless
+numpy
+Pillow
+rapid-doc[cpu]==0.7.0
+psutil>=5.9.0

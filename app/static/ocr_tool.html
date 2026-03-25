@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR 在线工具 - LightOCR Service</title>
+    <link rel="icon" type="image/jpeg" href="/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        :root {
+            --ve-primary: #2468ff;
+            --ve-primary-2: #6a4dff;
+            --ve-cyan: #13c2ff;
+            --ve-bg: #f4f7fd;
+            --ve-card: rgba(255, 255, 255, 0.82);
+            --ve-border: rgba(36, 104, 255, 0.14);
+        }
+        body {
+            font-family: "Plus Jakarta Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background:
+                radial-gradient(1000px 480px at -2% -20%, rgba(36, 104, 255, 0.16), transparent 58%),
+                radial-gradient(920px 420px at 100% -4%, rgba(19, 194, 255, 0.14), transparent 60%),
+                var(--ve-bg);
+        }
+        nav {
+            background: rgba(255, 255, 255, 0.74) !important;
+            border-bottom: 1px solid var(--ve-border);
+            backdrop-filter: blur(10px);
+        }
+        nav a {
+            color: #0f1c47 !important;
+        }
+        nav a span:first-child {
+            filter: drop-shadow(0 3px 9px rgba(36, 104, 255, 0.26));
+        }
+        .container {
+            max-width: 1260px !important;
+        }
+        .markdown-body {
+            font-family: "Plus Jakarta Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+            font-size: 15px;
+            line-height: 1.62;
+            word-wrap: break-word;
+        }
+        .markdown-body h1, .markdown-body h2, .markdown-body h3 {
+            font-weight: 600;
+            margin-top: 24px;
+            margin-bottom: 16px;
+            line-height: 1.25;
+        }
+        .markdown-body h1 { font-size: 2em; border-bottom: 1px solid #eaecef; padding-bottom: .3em; }
+        .markdown-body h2 { font-size: 1.5em; border-bottom: 1px solid #eaecef; padding-bottom: .3em; }
+        .markdown-body p { margin-top: 0; margin-bottom: 16px; }
+        .markdown-body code {
+            padding: .2em .4em;
+            margin: 0;
+            font-size: 85%;
+            background-color: #f6f8fa;
+            border-radius: 6px;
+        }
+        .markdown-body pre {
+            background-color: #f7f9ff;
+            border-radius: 12px;
+            border: 1px solid rgba(36, 104, 255, 0.14);
+            padding: 16px;
+            overflow: auto;
+        }
+        .markdown-body pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        .markdown-body img {
+            max-width: 100%;
+            box-sizing: content-box;
+            background-color: #fff;
+        }
+        #drop-zone,
+        .w-full.bg-white.rounded-lg.shadow-sm.p-3,
+        .w-1\/4.bg-white.rounded-lg.shadow-md,
+        .flex-1.bg-white.rounded-lg.shadow-md {
+            background: var(--ve-card) !important;
+            border: 1px solid var(--ve-border);
+            box-shadow: 0 18px 42px rgba(17, 50, 133, 0.1) !important;
+            backdrop-filter: blur(10px);
+            border-radius: 16px !important;
+        }
+        #drop-zone {
+            border-style: solid !important;
+            border-width: 1px !important;
+            background: linear-gradient(145deg, rgba(243, 248, 255, 0.9), rgba(255, 255, 255, 0.65)) !important;
+        }
+        #drop-zone:hover {
+            box-shadow: 0 16px 30px rgba(36, 104, 255, 0.15) !important;
+            transform: translateY(-1px);
+        }
+        #submit-btn {
+            background: linear-gradient(92deg, var(--ve-primary), var(--ve-primary-2)) !important;
+            border-radius: 12px !important;
+            box-shadow: 0 12px 26px rgba(41, 94, 255, 0.22);
+        }
+        #submit-btn:hover {
+            filter: brightness(1.03);
+            transform: translateY(-1px);
+        }
+        #preview-content-1,
+        #preview-content-2 {
+            border-radius: 14px !important;
+            border: 1px solid rgba(36, 104, 255, 0.14) !important;
+            background: rgba(255, 255, 255, 0.92) !important;
+        }
+        footer {
+            background: rgba(255,255,255,0.75) !important;
+            border-top: 1px solid var(--ve-border) !important;
+            backdrop-filter: blur(10px);
+        }
+        /* Loading Spinner */
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--ve-primary);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Navbar -->
+    <nav class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <a href="/" class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <span>🔙</span> LightOCR Service
+            </a>
+            <span class="text-sm text-gray-500">在线识别工具</span>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="flex-grow container mx-auto px-4 py-4 flex flex-col gap-4 h-[calc(100vh-64px)]">
+        
+        <!-- Top Panel: Upload & Config (Compact) -->
+        <div class="w-full bg-white rounded-lg shadow-sm p-3 flex items-center justify-between gap-4 shrink-0">
+             <div class="flex items-center gap-4 flex-grow">
+                <!-- Upload Area (Compact) -->
+                <div id="drop-zone" class="border-2 border-dashed border-gray-300 rounded-md px-4 py-2 transition-colors hover:border-blue-500 hover:bg-blue-50 cursor-pointer relative flex items-center gap-3 min-w-[250px]">
+                    <input type="file" id="file-input" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.jpeg,.png,.bmp,.txt,.md,.xls,.xlsx">
+                    <span class="text-xl text-gray-400">📄</span>
+                    <div class="flex flex-col justify-center">
+                        <span id="upload-text" class="text-sm text-gray-600 font-medium leading-tight">点击或拖拽文件</span>
+                        <span id="filename" class="text-xs text-gray-400 hidden truncate max-w-[200px] leading-tight mt-0.5"></span>
+                    </div>
+                </div>
+
+                <!-- Config -->
+                <div class="flex items-center gap-3 h-full border-l pl-4">
+                    <label class="flex items-center space-x-2 cursor-pointer select-none">
+                        <input type="checkbox" id="compare-mode" class="form-checkbox h-4 w-4 text-blue-600 rounded">
+                        <span class="text-sm text-gray-600">对比模式</span>
+                    </label>
+                    <select id="ocr-method" class="border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition-opacity">
+                        <option value="rapiddoc" selected>RapidDoc (推荐)</option>
+                        <option value="vlm_opencv">VLM + OpenCV (备选)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <div id="status-area" class="hidden flex items-center gap-2 text-blue-600 text-sm">
+                    <div class="spinner w-4 h-4 border-2"></div>
+                    <span id="status-text">处理中...</span>
+                </div>
+                <div id="error-area" class="hidden text-red-500 text-sm"></div>
+                <button id="submit-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-1.5 px-5 rounded text-sm transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed">
+                    开始识别
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Panel: Preview & Results -->
+        <div class="flex-grow flex gap-4 min-h-0">
+            
+            <!-- Left: Original Image Preview -->
+            <div class="w-1/4 bg-white rounded-lg shadow-md flex flex-col min-w-[250px]">
+                <div class="px-4 py-3 border-b bg-gray-50 flex justify-between items-center">
+                    <h2 class="text-sm font-semibold text-gray-800">原图预览</h2>
+                    <div class="flex gap-1">
+                        <button onclick="resetZoom()" class="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-gray-600" title="重置视图">↺</button>
+                    </div>
+                </div>
+                <div id="preview-container" class="flex-grow p-4 flex items-center justify-center bg-gray-100 overflow-hidden relative cursor-grab active:cursor-grabbing">
+                    <div id="original-preview-empty" class="text-gray-400 text-sm pointer-events-none select-none">暂无预览</div>
+                    <img id="original-preview-img" class="max-w-full max-h-full object-contain hidden shadow-sm transition-transform duration-75 origin-center" alt="Original Image" draggable="false">
+                    <iframe id="original-preview-pdf" class="w-full h-full hidden" frameborder="0"></iframe>
+                </div>
+            </div>
+
+            <!-- Right: Results -->
+            <div class="flex-1 bg-white rounded-lg shadow-md flex flex-col min-w-0">
+                <div class="px-4 py-3 border-b bg-gray-50">
+                    <h2 class="text-sm font-semibold text-gray-800">识别结果</h2>
+                </div>
+                <div class="flex-grow p-4 overflow-hidden relative">
+                    <div id="empty-state" class="absolute inset-0 flex items-center justify-center text-gray-400 flex-col pointer-events-none">
+                        <span class="text-4xl mb-2">👁️</span>
+                        <p>请上传文件开始识别</p>
+                    </div>
+                    
+                    <!-- Results Wrapper -->
+                    <div id="results-wrapper" class="hidden flex h-full gap-4">
+                        <!-- Result 1 -->
+                        <div id="result-container-1" class="flex-1 flex flex-col min-w-0 h-full transition-all duration-300">
+                            <div class="flex justify-between items-center mb-2 shrink-0">
+                                <span id="result-title-1" class="font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded text-sm">识别结果</span>
+                                <div class="flex gap-2 items-center">
+                                    <span id="result-time-1" class="text-xs font-mono text-blue-600 bg-blue-50 px-2 py-1 rounded hidden"></span>
+                                    <button onclick="copyContent('preview-content-1')" class="text-xs text-gray-500 hover:text-blue-600 px-1" title="复制">📋</button>
+                                </div>
+                            </div>
+                            <div id="preview-content-1" class="markdown-body border p-4 rounded bg-white overflow-auto flex-grow shadow-sm text-sm"></div>
+                        </div>
+
+                        <!-- Result 2 -->
+                        <div id="result-container-2" class="flex-1 flex flex-col min-w-0 h-full hidden border-l pl-4 border-gray-200 transition-all duration-300">
+                            <div class="flex justify-between items-center mb-2 shrink-0">
+                                <span id="result-title-2" class="font-bold text-gray-700 bg-gray-100 px-2 py-1 rounded text-sm">VLM + OpenCV</span>
+                                <div class="flex gap-2 items-center">
+                                    <span id="result-time-2" class="text-xs font-mono text-blue-600 bg-blue-50 px-2 py-1 rounded hidden"></span>
+                                    <button onclick="copyContent('preview-content-2')" class="text-xs text-gray-500 hover:text-blue-600 px-1" title="复制">📋</button>
+                                </div>
+                            </div>
+                            <div id="preview-content-2" class="markdown-body border p-4 rounded bg-white overflow-auto flex-grow shadow-sm text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-3 text-center text-gray-500 text-xs bg-white border-t">
+        本项目由 Token-Architect Wang 构建
+    </footer>
+
+    <script>
+        const SERVICE_BASE_URL = "{{ SERVICE_BASE_URL }}"; // From Server Template
+        
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        // const fileInfo = document.getElementById('file-info'); // Removed
+        const filenameSpan = document.getElementById('filename');
+        // const clearBtn = document.getElementById('clear-btn'); // Removed
+        const uploadText = document.getElementById('upload-text');
+        
+        const submitBtn = document.getElementById('submit-btn');
+        const ocrMethodSelect = document.getElementById('ocr-method');
+        const compareModeCheckbox = document.getElementById('compare-mode');
+        const statusArea = document.getElementById('status-area');
+        const statusText = document.getElementById('status-text');
+        const errorArea = document.getElementById('error-area');
+        const emptyState = document.getElementById('empty-state');
+        const resultsWrapper = document.getElementById('results-wrapper');
+        
+        // Preview
+        const originalPreviewEmpty = document.getElementById('original-preview-empty');
+        const originalPreviewImg = document.getElementById('original-preview-img');
+        const originalPreviewPdf = document.getElementById('original-preview-pdf');
+        const previewContainer = document.getElementById('preview-container');
+        
+        // Zoom & Pan State
+        let scale = 1;
+        let panning = false;
+        let pointX = 0;
+        let pointY = 0;
+        let startX = 0;
+        let startY = 0;
+
+        function setTransform() {
+            originalPreviewImg.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+        }
+        
+        function resetZoom() {
+            scale = 1;
+            pointX = 0;
+            pointY = 0;
+            setTransform();
+        }
+
+        previewContainer.addEventListener('wheel', (e) => {
+            if (originalPreviewImg.classList.contains('hidden')) return;
+            e.preventDefault();
+
+            const delta = -e.deltaY;
+            (delta > 0) ? (scale *= 1.1) : (scale /= 1.1);
+            scale = Math.min(Math.max(0.1, scale), 10);
+            setTransform();
+        });
+
+        previewContainer.addEventListener('mousedown', (e) => {
+            if (originalPreviewImg.classList.contains('hidden')) return;
+            e.preventDefault();
+            startX = e.clientX - pointX;
+            startY = e.clientY - pointY;
+            panning = true;
+        });
+
+        previewContainer.addEventListener('mouseup', () => panning = false);
+        previewContainer.addEventListener('mouseleave', () => panning = false);
+
+        previewContainer.addEventListener('mousemove', (e) => {
+            if (!panning) return;
+            e.preventDefault();
+            pointX = e.clientX - startX;
+            pointY = e.clientY - startY;
+            setTransform();
+        });
+        
+        // Result Containers
+        const resultContainer1 = document.getElementById('result-container-1');
+        const resultContainer2 = document.getElementById('result-container-2');
+        const resultTitle1 = document.getElementById('result-title-1');
+        const resultTitle2 = document.getElementById('result-title-2');
+        const previewContent1 = document.getElementById('preview-content-1');
+        const previewContent2 = document.getElementById('preview-content-2');
+        const resultTime1 = document.getElementById('result-time-1');
+        const resultTime2 = document.getElementById('result-time-2');
+
+        let currentFile = null;
+        let currentUUID = null;
+        let pollingIntervals = {}; // Store intervals by taskId
+
+        function generateUUID() {
+            if (window.crypto && window.crypto.randomUUID) {
+                return window.crypto.randomUUID();
+            }
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        // --- UI Interactions ---
+        compareModeCheckbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                ocrMethodSelect.disabled = true;
+                ocrMethodSelect.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                ocrMethodSelect.disabled = false;
+                ocrMethodSelect.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+        // --- Drag & Drop ---
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            dropZone.classList.add('bg-blue-50', 'border-blue-500');
+        }
+
+        function unhighlight(e) {
+            dropZone.classList.remove('bg-blue-50', 'border-blue-500');
+        }
+
+        dropZone.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            handleFiles(files);
+        }
+
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+
+        function handleFiles(files) {
+            if (files.length > 0) {
+                currentFile = files[0];
+                currentUUID = generateUUID(); // Generate stable UUID for this file session
+                
+                filenameSpan.textContent = currentFile.name;
+                filenameSpan.classList.remove('hidden');
+                uploadText.textContent = "已选择文件";
+                
+                // Show preview
+                showOriginalPreview(currentFile);
+                
+                // Reset UI
+                resetResult();
+            }
+        }
+        
+        async function showOriginalPreview(file, convertedUrl = null) {
+            const url = convertedUrl || URL.createObjectURL(file);
+            
+            originalPreviewEmpty.classList.add('hidden');
+            originalPreviewImg.classList.add('hidden');
+            originalPreviewPdf.classList.add('hidden');
+            
+            // Check file type or extension
+            const isImage = file.type.startsWith('image/');
+            const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+            const isOffice = /\.(doc|docx|ppt|pptx)$/i.test(file.name);
+
+            if (isImage) {
+                originalPreviewImg.src = url;
+                originalPreviewImg.classList.remove('hidden');
+                resetZoom(); // Reset zoom for new image
+            } else if (isPdf) {
+                // If it's a PDF, we can preview it directly (browser support)
+                // OR we can upload it to preview endpoint to ensure consistent path? 
+                // Local preview is faster.
+                originalPreviewPdf.src = url;
+                originalPreviewPdf.classList.remove('hidden');
+                
+                // Also optionally upload for backend prep? Not strictly needed if we send file on submit.
+            } else if (isOffice) {
+                // Office file: Needs conversion
+                if (convertedUrl) {
+                    originalPreviewPdf.src = convertedUrl;
+                    originalPreviewPdf.classList.remove('hidden');
+                } else {
+                    // Trigger Auto Preview
+                    originalPreviewEmpty.innerHTML = `<div class="flex flex-col items-center justify-center"><div class="spinner mb-2"></div><p class="text-sm text-gray-500">正在生成预览...</p></div>`;
+                    originalPreviewEmpty.classList.remove('hidden');
+                    
+                    try {
+                        const formData = new FormData();
+                        formData.append('file', file);
+                        formData.append('uuid', currentUUID);
+                        formData.append('ocr_method', 'rapiddoc'); // Default for preview
+                        
+                        const response = await fetch(`${SERVICE_BASE_URL}/ocr/preview`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            showOriginalPreview(file, data.preview_url);
+                        } else {
+                            throw new Error("Preview failed");
+                        }
+                    } catch (e) {
+                        console.error("Preview error:", e);
+                        originalPreviewEmpty.innerHTML = `<div class="text-center"><span class="text-4xl">📄</span><p class="mt-2">Office 文档 (${file.name})</p><p class="text-sm text-red-500">预览失败: ${e.message}</p></div>`;
+                    }
+                }
+            } else {
+                originalPreviewEmpty.textContent = "暂不支持预览此格式";
+                originalPreviewEmpty.classList.remove('hidden');
+            }
+        }
+
+        /*
+        clearBtn.addEventListener('click', () => {
+            currentFile = null;
+            fileInput.value = '';
+            fileInfo.classList.add('hidden');
+            dropZone.classList.remove('hidden');
+            resetResult();
+        });
+        */
+
+        function resetResult() {
+            stopAllPolling();
+            statusArea.classList.add('hidden');
+            errorArea.classList.add('hidden');
+            emptyState.classList.remove('hidden');
+            resultsWrapper.classList.add('hidden');
+            
+            previewContent1.innerHTML = '';
+            previewContent2.innerHTML = '';
+            resultTime1.classList.add('hidden');
+            resultTime2.classList.add('hidden');
+            
+            submitBtn.disabled = false;
+        }
+        
+        function copyContent(elementId) {
+            const element = document.getElementById(elementId);
+            const markdown = element.getAttribute('data-markdown') || element.innerText;
+            
+            if (!markdown) return;
+
+            // Try the modern API first (works on HTTPS/localhost)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(markdown).then(() => {
+                    showToast('复制成功');
+                }).catch(err => {
+                    console.error('Async: Could not copy text: ', err);
+                    fallbackCopyTextToClipboard(markdown);
+                });
+            } else {
+                fallbackCopyTextToClipboard(markdown);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            var textArea = document.createElement("textarea");
+            textArea.value = text;
+            
+            // Avoid scrolling to bottom
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                var successful = document.execCommand('copy');
+                var msg = successful ? '复制成功' : '复制失败';
+                showToast(msg);
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showToast('复制失败: 浏览器不支持');
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        function showToast(message) {
+            // Check if toast already exists
+            let toast = document.getElementById('toast-notification');
+            if (!toast) {
+                toast = document.createElement('div');
+                toast.id = 'toast-notification';
+                toast.className = 'fixed bottom-10 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-2 rounded-full shadow-lg transition-all duration-300 z-50 opacity-0 translate-y-4';
+                document.body.appendChild(toast);
+            }
+            
+            toast.textContent = message;
+            
+            // Show
+            requestAnimationFrame(() => {
+                toast.classList.remove('opacity-0', 'translate-y-4');
+            });
+            
+            // Hide after 2s
+            if (toast.timeoutId) clearTimeout(toast.timeoutId);
+            toast.timeoutId = setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-4');
+            }, 2000);
+        }
+
+        // --- Submit & Polling ---
+        async function startTask(method, explicitUUID = null) {
+            // If explicitUUID is provided (Compare Mode), use it.
+            // Otherwise, generate a NEW UUID for this specific task execution.
+            // We do NOT use currentUUID for the task itself anymore to avoid conflicts 
+            // and race conditions, but we send it as preview_id.
+            const uuid = explicitUUID || generateUUID();
+
+            const formData = new FormData();
+            formData.append('uuid', uuid);
+            
+            // Send file if available
+            if (currentFile) {
+                formData.append('file', currentFile);
+            }
+            
+            // Send preview_id to allow backend to reuse the converted PDF
+            if (currentUUID) {
+                formData.append('preview_id', currentUUID);
+            }
+            
+            formData.append('ocr_method', method);
+
+            const response = await fetch(`${SERVICE_BASE_URL}/ocr/submit`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`Task ${method} failed: ${response.statusText}`);
+            }
+            return uuid;
+        }
+
+        submitBtn.addEventListener('click', async () => {
+            if (!currentFile) return;
+
+            submitBtn.disabled = true;
+            statusArea.classList.remove('hidden');
+            statusText.textContent = "正在提交任务...";
+            errorArea.classList.add('hidden');
+            emptyState.classList.add('hidden');
+            resultsWrapper.classList.remove('hidden');
+            
+            // Prepare UI
+            previewContent1.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+            previewContent2.innerHTML = '<div class="spinner mx-auto mt-10"></div>';
+            resultTime1.classList.add('hidden');
+            resultTime2.classList.add('hidden');
+            
+            // Clear old data attributes
+            previewContent1.removeAttribute('data-markdown');
+            previewContent2.removeAttribute('data-markdown');
+
+            const isCompare = compareModeCheckbox.checked;
+
+            try {
+                if (isCompare) {
+                    // Compare Mode
+                    resultContainer1.classList.remove('hidden');
+                    resultContainer2.classList.remove('hidden');
+                    resultTitle1.textContent = "RapidDoc";
+                    resultTitle2.textContent = "VLM + OpenCV";
+
+                    // Start both tasks
+                    // Optimization: Use currentUUID (Preview UUID) for RapidDoc to reuse the file on disk
+                    // Use a new UUID for VLM (which processes in memory mostly)
+                    const uuid1 = currentUUID || generateUUID();
+                    const uuid2 = generateUUID();
+
+                    await Promise.all([
+                        startTask('rapiddoc', uuid1),
+                        startTask('vlm_opencv', uuid2)
+                    ]);
+
+                    startPolling(uuid1, previewContent1, resultTime1, true);
+                    startPolling(uuid2, previewContent2, resultTime2);
+                    
+                    statusText.textContent = "双路识别处理中...";
+
+                } else {
+                    // Single Mode
+                    resultContainer1.classList.remove('hidden');
+                    resultContainer2.classList.add('hidden');
+                    
+                    const method = ocrMethodSelect.value;
+                    resultTitle1.textContent = ocrMethodSelect.options[ocrMethodSelect.selectedIndex].text;
+                    
+                    // Generate new UUID for this run to avoid result caching/collision
+                    // Source file reuse is handled by passing 'preview_id' (currentUUID) in startTask
+                    const uuid = generateUUID();
+                    await startTask(method, uuid);
+                    
+                    startPolling(uuid, previewContent1, resultTime1, true);
+                    
+                    statusText.textContent = "识别处理中...";
+                }
+
+            } catch (error) {
+                showError(error.message);
+                submitBtn.disabled = false;
+                statusArea.classList.add('hidden');
+            }
+        });
+
+        function startPolling(taskId, contentElement, timeElement, isPrimary = false) {
+            let attempts = 0;
+            const maxAttempts = 300; // 5 minutes
+
+            const intervalId = setInterval(async () => {
+                attempts++;
+                if (attempts > maxAttempts) {
+                    stopPolling(taskId);
+                    contentElement.innerHTML = '<div class="text-red-500 text-center p-4">请求超时</div>';
+                    checkAllDone();
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`${SERVICE_BASE_URL}/ocr/result/${taskId}`);
+                    if (response.status === 404) return;
+                    if (!response.ok) throw new Error("Status check failed");
+
+                    const data = await response.json();
+
+                    if (data.status === 'completed') {
+                        stopPolling(taskId);
+                        renderMarkdown(contentElement, data.content);
+                        if (data.duration) {
+                            timeElement.textContent = `${data.duration}s`;
+                            timeElement.classList.remove('hidden');
+                        }
+                        checkAllDone();
+                        
+                        // Try to preview PDF for office files
+                        if (currentFile && /\.(doc|docx|ppt|pptx)$/i.test(currentFile.name)) {
+                             // Modified: Construct URL based on unified source structure
+                             // output/temp/source/{preview_id}/{preview_id}.pdf
+                             
+                             let pdfUrl = "";
+                             // We should use the currentUUID (preview ID) to find the source PDF
+                             if (currentUUID) {
+                                 pdfUrl = `${SERVICE_BASE_URL}/temp/source/${currentUUID}/${currentUUID}.pdf`;
+                             }
+                             
+                             // Only update preview if it's the first time or single mode
+                             if (!isCompare || isPrimary) {
+                                 showOriginalPreview(currentFile, pdfUrl);
+                             }
+                        }
+
+                    } else if (data.status === 'failed') {
+                        stopPolling(taskId);
+                        contentElement.innerHTML = `<div class="text-red-500 p-4 text-center">识别失败: ${data.error || '未知错误'}</div>`;
+                        checkAllDone();
+                    }
+                } catch (error) {
+                    console.error(error);
+                }
+            }, 1000);
+            
+            pollingIntervals[taskId] = intervalId;
+        }
+
+        function stopPolling(taskId) {
+            if (pollingIntervals[taskId]) {
+                clearInterval(pollingIntervals[taskId]);
+                delete pollingIntervals[taskId];
+            }
+        }
+        
+        function stopAllPolling() {
+            Object.keys(pollingIntervals).forEach(taskId => stopPolling(taskId));
+        }
+        
+        function checkAllDone() {
+            if (Object.keys(pollingIntervals).length === 0) {
+                statusArea.classList.add('hidden');
+                submitBtn.disabled = false;
+            }
+        }
+
+        function showError(msg) {
+            errorArea.textContent = msg;
+            errorArea.classList.remove('hidden');
+        }
+
+        function renderMarkdown(element, markdown) {
+            // Store raw markdown for copy function
+            element.setAttribute('data-markdown', markdown);
+            
+            // Protect LaTeX formulas from marked.js processing
+            // 1. Identify and replace $$...$$ and $...$ with placeholders
+            const mathExpressions = [];
+            
+            // Protect display math
+            let protectedText = markdown.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
+                mathExpressions.push(match);
+                return `%%%MATH_DISPLAY_${mathExpressions.length - 1}%%%`;
+            });
+            
+            // Protect inline math (support escaped $ and non-greedy matching)
+            protectedText = protectedText.replace(/\$((?:\\\$|[^$])+?)\$/g, (match) => {
+                mathExpressions.push(match);
+                return `%%%MATH_INLINE_${mathExpressions.length - 1}%%%`;
+            });
+            
+            // Protect LaTeX blocks \[ ... \]
+            protectedText = protectedText.replace(/\\\[([\s\S]*?)\\\]/g, (match) => {
+                mathExpressions.push(match);
+                return `%%%MATH_DISPLAY_${mathExpressions.length - 1}%%%`;
+            });
+
+            // Protect LaTeX inline \( ... \)
+            protectedText = protectedText.replace(/\\\(([\s\S]*?)\\\)/g, (match) => {
+                mathExpressions.push(match);
+                return `%%%MATH_INLINE_${mathExpressions.length - 1}%%%`;
+            });
+
+            // Render Markdown
+            let html = marked.parse(protectedText);
+            
+            // Restore formulas
+            html = html.replace(/%%%MATH_DISPLAY_(\d+)%%%/g, (match, index) => {
+                return mathExpressions[index];
+            });
+            html = html.replace(/%%%MATH_INLINE_(\d+)%%%/g, (match, index) => {
+                return mathExpressions[index];
+            });
+
+            element.innerHTML = html;
+            
+            // Trigger MathJax
+            if (window.MathJax) {
+                window.MathJax.typesetPromise([element]).catch((err) => console.log('MathJax error:', err));
+            }
+        }
+    </script>
+</body>
+</html>

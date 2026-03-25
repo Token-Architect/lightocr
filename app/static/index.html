@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LightOCR Service API Documentation</title>
+    <link rel="icon" type="image/jpeg" href="/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']]
+            },
+            svg: {
+                fontCache: 'global'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+        :root {
+            --ve-primary: #2468ff;
+            --ve-primary-2: #6a4dff;
+            --ve-cyan: #13c2ff;
+            --ve-bg: #f4f7fd;
+            --ve-card: rgba(255, 255, 255, 0.82);
+            --ve-border: rgba(36, 104, 255, 0.14);
+        }
+        body {
+            font-family: "Plus Jakarta Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+            background:
+                radial-gradient(1200px 500px at 10% -10%, rgba(36, 104, 255, 0.16), transparent 58%),
+                radial-gradient(900px 460px at 90% 0%, rgba(19, 194, 255, 0.14), transparent 60%),
+                var(--ve-bg);
+            color: #0f172a;
+        }
+        .container {
+            max-width: 1120px !important;
+        }
+        header {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(255,255,255,0.92), rgba(255,255,255,0.66));
+            border: 1px solid var(--ve-border);
+            border-radius: 24px;
+            backdrop-filter: blur(12px);
+            box-shadow: 0 22px 60px rgba(24, 65, 170, 0.12);
+            padding: 56px 28px;
+        }
+        header::before {
+            content: "";
+            position: absolute;
+            inset: -30% auto auto -8%;
+            width: 260px;
+            height: 260px;
+            border-radius: 9999px;
+            background: radial-gradient(circle, rgba(36, 104, 255, 0.22), transparent 72%);
+            pointer-events: none;
+        }
+        header::after {
+            content: "";
+            position: absolute;
+            right: -10%;
+            bottom: -38%;
+            width: 340px;
+            height: 340px;
+            border-radius: 9999px;
+            background: radial-gradient(circle, rgba(19, 194, 255, 0.24), transparent 72%);
+            pointer-events: none;
+        }
+        header h1 {
+            font-size: clamp(2rem, 4vw, 3.3rem) !important;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, var(--ve-primary), var(--ve-primary-2));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent !important;
+        }
+        header a {
+            background: linear-gradient(92deg, var(--ve-primary), var(--ve-primary-2)) !important;
+            border-radius: 9999px !important;
+            box-shadow: 0 14px 34px rgba(41, 94, 255, 0.26) !important;
+            transition: transform .22s ease, box-shadow .22s ease !important;
+        }
+        header a:hover {
+            transform: translateY(-2px) scale(1.02) !important;
+            box-shadow: 0 18px 42px rgba(41, 94, 255, 0.32) !important;
+        }
+        section {
+            background: var(--ve-card) !important;
+            border: 1px solid var(--ve-border);
+            border-radius: 22px !important;
+            box-shadow: 0 18px 48px rgba(17, 50, 133, 0.1);
+            backdrop-filter: blur(8px);
+        }
+        section h2 {
+            border-color: rgba(36, 104, 255, 0.18) !important;
+        }
+        section .bg-blue-50,
+        section .bg-green-50 {
+            border: 1px solid rgba(36, 104, 255, 0.15);
+            background: linear-gradient(160deg, rgba(235, 244, 255, 0.82), rgba(245, 249, 255, 0.6)) !important;
+        }
+        .markdown-body {
+            font-family: "Plus Jakarta Sans", "PingFang SC", "Microsoft YaHei", sans-serif;
+            font-size: 15px;
+            line-height: 1.66;
+            word-wrap: break-word;
+        }
+        .markdown-body pre {
+            background-color: #f6f8fd;
+            border-radius: 12px;
+            border: 1px solid rgba(36, 104, 255, 0.12);
+            padding: 16px;
+            overflow: auto;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <!-- Header -->
+        <header class="mb-10 text-center">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">LightOCR Service</h1>
+            <p class="text-gray-600 text-lg mb-6">支持多格式文档识别与智能公式提取的独立部署服务</p>
+            <a href="/tool" class="inline-block bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-full shadow-lg transition-transform transform hover:scale-105">
+                🚀 去使用
+            </a>
+        </header>
+
+        <!-- API Reference Section -->
+        <section class="bg-white rounded-lg shadow-md p-6 mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">支持格式说明</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-blue-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-blue-800 mb-2">📄 文档与图片识别</h3>
+                    <ul class="list-disc list-inside text-gray-700 text-sm space-y-1">
+                        <li><strong>PDF</strong>: 原生支持，自动分页识别</li>
+                        <li><strong>Office</strong>: <code>.doc</code>, <code>.docx</code>, <code>.ppt</code>, <code>.pptx</code> (自动转PDF后识别)</li>
+                        <li><strong>图片</strong>: <code>.jpg</code>, <code>.png</code>, <code>.jpeg</code>, <code>.bmp</code></li>
+                        <li><strong>其他</strong>: <code>.txt</code>, <code>.md</code>, <code>.xls</code>, <code>.xlsx</code> (直接文本提取)</li>
+                    </ul>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg">
+                    <h3 class="font-bold text-green-800 mb-2">🖼️ 智能子图提取</h3>
+                    <p class="text-gray-700 text-sm mb-2">对于包含复杂图表、公式或手绘草图的文件，系统会自动：</p>
+                    <ul class="list-disc list-inside text-gray-700 text-sm space-y-1">
+                        <li>检测并裁剪出独立子图</li>
+                        <li>保存为高清图片资源</li>
+                        <li>在 Markdown 结果中自动插入图片链接</li>
+                        <li>支持物理题、数学公式、工程图纸等场景</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">API 接口说明</h2>
+            
+            <!-- 1. Submit Task -->
+            <div class="mb-8">
+                <div class="flex items-center mb-2">
+                    <span class="bg-green-100 text-green-800 px-3 py-1 rounded-md font-mono font-bold mr-3">POST</span>
+                    <code class="text-lg text-gray-700">/ocr/submit</code>
+                </div>
+                <p class="text-gray-600 mb-2">提交 OCR 识别任务</p>
+                <div class="bg-gray-100 p-4 rounded-md overflow-x-auto">
+<pre class="text-sm">curl -X POST "{{ SERVICE_BASE_URL }}/ocr/submit" \
+  -F "uuid=task-123456" \
+  -F "file=@/path/to/your/image.png" \
+  -F "ocr_method=rapiddoc" # 可选: rapiddoc (默认) 或 vlm_opencv</pre>
+                </div>
+                
+                <p class="text-gray-600 mt-4 mb-2">响应示例 (Response):</p>
+                <div class="bg-gray-800 text-gray-200 p-4 rounded-md overflow-x-auto">
+<pre class="text-sm font-mono">{
+  "task_id": "task-123456",
+  "status": "pending"
+}</pre>
+                </div>
+            </div>
+
+            <!-- 2. Check Status -->
+            <div class="mb-8">
+                <div class="flex items-center mb-2">
+                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-md font-mono font-bold mr-3">GET</span>
+                    <code class="text-lg text-gray-700">/ocr/status/{task_id}</code>
+                </div>
+                <p class="text-gray-600 mb-2">查询任务处理状态</p>
+                <div class="bg-gray-100 p-4 rounded-md overflow-x-auto">
+<pre class="text-sm">curl "{{ SERVICE_BASE_URL }}/ocr/status/task-123456"</pre>
+                </div>
+                
+                <p class="text-gray-600 mt-4 mb-2">响应示例 (Response):</p>
+                <div class="bg-gray-800 text-gray-200 p-4 rounded-md overflow-x-auto">
+<pre class="text-sm font-mono">{
+  "task_id": "task-123456",
+  "status": "processing"
+}</pre>
+                </div>
+            </div>
+
+            <!-- 3. Get Result -->
+            <div class="mb-4">
+                <div class="flex items-center mb-2">
+                    <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-md font-mono font-bold mr-3">GET</span>
+                    <code class="text-lg text-gray-700">/ocr/result/{task_id}</code>
+                </div>
+                <p class="text-gray-600 mb-2">获取识别结果（Markdown 格式）</p>
+                <div class="bg-gray-100 p-4 rounded-md overflow-x-auto">
+<pre class="text-sm">curl "{{ SERVICE_BASE_URL }}/ocr/result/task-123456"</pre>
+                </div>
+                
+                <p class="text-gray-600 mt-4 mb-2">响应示例 (Response):</p>
+                <div class="bg-gray-800 text-gray-200 p-4 rounded-md overflow-x-auto">
+<pre class="text-sm font-mono">{
+  "task_id": "task-123456",
+  "status": "completed",
+  "filename": "image.png",
+  "content": "# 标题\n\n正文内容...\n\n![diagram](...)\n\n<!-- Generated by RapidDoc -->",
+  "duration": 2.5
+}</pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- Examples Section -->
+        <section class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-2">案例展示</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Input -->
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">1. 输入图片</h3>
+                    <div class="border rounded-lg p-2 bg-gray-50 min-h-[400px] max-h-[800px] overflow-y-auto">
+                        <img src="/static/demo.png" alt="Demo Input" class="w-full h-auto">
+                    </div>
+                </div>
+
+                <!-- Output -->
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-4">2. 输出结果 (Markdown渲染)</h3>
+                    <div id="demo-output" class="markdown-body border rounded-lg bg-gray-50 min-h-[400px] max-h-[800px] overflow-y-auto p-4">
+                        <!-- Content will be rendered by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>&copy; 2026 OCR Service. All rights reserved.</p>
+            <p class="mt-1">本项目由 Token-Architect Wang 构建</p>
+        </footer>
+    </div>
+
+    <script>
+        // Demo content
+        const demoMarkdown = `四、结构尺寸及受力如图所示，AB为刚体，CD为圆截面钢杆，直径为$D=35mm$，材料为Q235钢，许用应力为$[\\sigma]=180MPa$，$E=200GPa$。
+
+![diagram]({{ SERVICE_BASE_URL }}/static/diagram_6e24b5f1.png)
+
+(1) 求许可载荷$[F]$。
+
+(2) 计算当$F=50KN$时，B点竖向位移。
+
+解：(1) 对AB进行受力分析
+
+![diagram]({{ SERVICE_BASE_URL }}/static/diagram_94d65ee3.png)
+
+$$\\sum M_A = F_{NCD} \\times 2000 \\times \\sin30^\\circ - F \\times (1000+2000) = 0$$
+
+解得 $F_{NCD}=3F$
+
+CD杆轴向拉伸，由强度条件有：
+
+$$\\sigma = \\frac{F_{NCD}}{A} = \\frac{3F}{\\frac{\\pi}{4} \\times 35 \\times 35} MPa \\leq [\\sigma]=180MPa$$
+
+解得 $F \\leq \\frac{\\pi \\times 35 \\times 35 \\times 180}{3 \\times 4} N=57.7KN$
+
+(2) 画出变形图如下：
+
+![diagram]({{ SERVICE_BASE_URL }}/static/diagram_11ec77c2.png)
+
+根据胡克定律，有
+
+$$\\Delta L_{CD} = \\frac{F_{NCD} \\cdot l_{CD}}{EA} = \\frac{3 \\times 50 \\times 10^3 \\times \\frac{2}{\\sqrt{3}} \\times 2000}{200 \\times 10^3 \\times \\frac{\\pi}{4} \\times 35 \\times 35 \\times 10^{-6}} mm=1.8mm$$
+
+根据变形图得到$\\Delta_D=3.6mm$，$\\Delta_B=5.4mm(\\downarrow)$`;
+
+        function renderMarkdown(elementId, markdown) {
+            const element = document.getElementById(elementId);
+            
+            // Protect LaTeX formulas from marked.js processing
+            const mathExpressions = [];
+            
+            // Protect display math
+            let protectedText = markdown.replace(/\$\$([\s\S]*?)\$\$/g, (match) => {
+                mathExpressions.push(match);
+                return `%%%MATH_DISPLAY_${mathExpressions.length - 1}%%%`;
+            });
+            
+            // Protect inline math
+            protectedText = protectedText.replace(/\$((?:\\\$|[^$])+?)\$/g, (match) => {
+                mathExpressions.push(match);
+                return `%%%MATH_INLINE_${mathExpressions.length - 1}%%%`;
+            });
+
+            // Render Markdown
+            let html = marked.parse(protectedText);
+            
+            // Restore formulas
+            html = html.replace(/%%%MATH_DISPLAY_(\d+)%%%/g, (match, index) => {
+                return mathExpressions[index];
+            });
+            html = html.replace(/%%%MATH_INLINE_(\d+)%%%/g, (match, index) => {
+                return mathExpressions[index];
+            });
+
+            element.innerHTML = html;
+            
+            // Trigger MathJax
+            if (window.MathJax && window.MathJax.typesetPromise) {
+                window.MathJax.typesetPromise([element]).catch((err) => console.log('MathJax error:', err));
+            } else if (window.MathJax && window.MathJax.typeset) {
+                // Fallback for older MathJax versions or if typesetPromise not ready
+                window.MathJax.typeset([element]);
+            }
+        }
+
+        // Render demo content on load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Ensure MathJax is loaded before rendering
+            if (window.MathJax && window.MathJax.startup) {
+                window.MathJax.startup.promise.then(() => {
+                    renderMarkdown('demo-output', demoMarkdown);
+                });
+            } else {
+                // Fallback: simple timeout or immediate render
+                setTimeout(() => renderMarkdown('demo-output', demoMarkdown), 100);
+            }
+        });
+    </script>
+</body>
+</html>
