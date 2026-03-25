@@ -905,7 +905,7 @@ def _extract_text_from_pdf_vlm_opencv(file_content: bytes,
         # Limit max_workers to avoid hitting API rate limits or OOM
         if max_workers is None:
             cpu_count = os.cpu_count() or 4
-            max_workers = max(1, _get_int_env("OCR_MAX_WORKERS", min(10, cpu_count)))
+            max_workers = max(1, _get_int_env("OCR_MAX_WORKERS", min(8, cpu_count)))
         actual_workers = min(max_workers, page_count)
         
         with ThreadPoolExecutor(max_workers=actual_workers) as executor:
